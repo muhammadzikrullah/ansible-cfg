@@ -1,0 +1,25 @@
+---
+    - ec2_vpc_net:
+       profile: "{{ aws_profile }}"
+       region: "{{ aws_region }}"
+       state: present
+       cidr_block: "10.0.0.0/16"
+       wait: yes
+       wait_timeout: 300
+       resource_tags:
+         "Name": "{{ project_name }} VPC"
+       subnets:
+         - cidr: "10.0.1.0/24"
+           az: "{{aws_az}}"
+           resource_tags: { "Tier": "web", "Name" : "{{ project_name }} Web", "uid" : "{{ project_key }}_web" }
+       internet_gateway: True
+       route_tables:
+         - subnets:
+             - "10.0.1.0/24"
+           routes:
+             - dest: "0.0.0.0/0"
+               gw: igw
+           resource_tags:
+            "Name": "{{ project_name }} VPC"
+      register: vpc_settings
+      tenancy : default

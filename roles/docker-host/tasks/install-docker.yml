@@ -1,0 +1,72 @@
+---    
+    - name: Add Docker Repository Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+  
+    - name: Add Docker repository and update apt cache
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+        state: present
+        filename: docker
+  
+    - name: Install (or update) docker package
+      apt:
+        name: "docker-ce"
+        state: latest
+        update_cache: yes
+        
+    - name: Install pip
+      apt: name="python-pip" state="present"
+  
+    - name: Set docker daemon 
+      copy:
+        content: "DOCKER_OPTS=\"-g /data/docker -s overlay\""
+        dest: /etc/default/docker
+        owner: root
+        group: root
+        mode: 0644
+         
+    - name: Install docker python library
+      pip:
+        name: docker
+    
+    - name: "Add docker group"
+      group: name=docker state=present
+    
+    - name: Add default \"ubuntu\" user (for AWS) docker group
+      shell: "usermod -aG docker ubuntu"
+    
+    - name: Check if /etc/updatedb.conf exists
+      stat:
+        path: /etc/updatedb.conf
+      register: updatedb_conf_exists
+    
+    - name: updatedb tidak dalam /var/lib/docker
+      lineinfile:
+        dest: /etc/updatedb.conf
+        state: present
+        backrefs: yes
+        regexp: '^PRUNEPATHS="(/var/lib/docker )?(.*)"$'
+        line: 'PRUNEPATHS="/var/lib/docker \2"'
+      when: updatedb_conf_exists.stat.exists  
+    
+    - name: cek ini jika ada /etc/default/ufw 
+      stat:
+        path: /etc/default/ufw
+      register: ufw_default_exists
+    
+    - name: ganti ufw default forward policy from drop to accept
+      lineinfile:
+        dest: /etc/default/ufw
+        regexp: "^DEFAULT_FORWARD_POLICY="
+        line: "DEFAULT_FORWARD_POLICY=\"ACCEPT\""
+      when: ufw_default_exists.stat.exists
+  
+    - name: Install Docker Compose
+      shell: "pip install -U docker-compose"
+  
+    - name: (Re)Start docker-engine services
+      service:
+        name: docker
+        state: restarted

@@ -1,0 +1,8 @@
+---
+- hosts: taserver
+  gather_facts: false
+  become : true
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+  roles:
+    - docker-host

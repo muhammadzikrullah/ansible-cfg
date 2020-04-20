@@ -1,0 +1,26 @@
+---
+  - name: stop container kalo ada yang running
+    docker_container:
+      name: "{{item.image}}"
+      state: absent
+    with_items: "{{dockerhub_microservices}}"
+    
+  - name: install docker image dari list dockerhub
+    docker_image: name="{{item.image}}" state=absent
+    with_items: "{{dockerhub_microservices}}"
+
+  - name: Install Microservices dari list dockerhub
+    docker_container:
+      name: "{{item.name}}"
+      image: "{{item.image}}"
+      state: started
+      ports: "{{item.ports}}"
+      restart_policy: "on-failure"
+      env:
+        SERVICE_NAME: "{{item.name}}"
+        SERVICE_TAGS: "microservices"
+        SERVICE_CHECK_HTTP: "/healthcheck"
+        SERVICE_CHECK_INTERVAL: "30s"
+        SERVICE_CHECK_TIMEOUT: "5s"
+    with_items: "{{dockerhub_microservices}}"
+  

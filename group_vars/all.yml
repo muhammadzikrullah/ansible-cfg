@@ -1,0 +1,56 @@
+aws_profile : "zikrul"
+aws_region: "ap-southeast-1"
+aws_az: "ap-southeast-1"
+aws_az_alt: "ap-southeast-1"
+aws_image: ami-09a4a9ce71ff3f20bs
+
+project_name: "TA"
+project_key: "Tugas_Akhir_{{ aws_region }}"
+
+key_name: ssh/serveraws.pem
+aws_instance_type: t2.micro
+
+aws_security: "{{ project_key }}_port"
+
+dockerhub_microservices:
+    - "image" : "zikruljack/ta"
+      "name"  : "frontend"
+      "ports" : "127.0.0.1:10001:10001"
+  
+    - "image" : "mzikrul/ta"
+      "name"  : "sensor"
+      "ports" : "127.0.0.1:10003:10003"
+  
+    - "image" : "zikrul/ta"
+      "name"  : "serializer"
+      "ports" : "127.0.0.1:10000:10000"
+  
+    - "image" : "obong/ta"
+      "name"  : "actuator"
+      "ports" : "127.0.0.1:10004:10004"
+  
+    - "image" : "obongjack/ta"
+      "name"  : "broker"
+      "ports" : 
+        - 127.0.0.1:1883:1883
+        - 127.0.0.1:8883:8883
+        - 127.0.0.1:10002:10002
+      
+    - "image" : "tutum/influxdb"
+      "name"  : "influxdb"
+      "ports" : 
+        - 127.0.0.1:8083:8083
+        - 127.0.0.1:8086:8086
+
+server_clusters: 
+  - zone: "{{ aws_az }}"
+    exact_count: 2
+    assign_public_ip: yes
+    tags:
+      cluster: "{{ project_key }}"
+      class: gateway_servers
+      subnet_tag: "{{ project_key }}_web"
+
+
+ansible_ssh_private_key_file: ssh/private-key.pem
+ansible_ssh_user: ubuntu

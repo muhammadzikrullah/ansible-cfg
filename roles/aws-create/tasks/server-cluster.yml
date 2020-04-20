@@ -1,0 +1,20 @@
+---
+    - name: Launch Server Clusters
+        ec2:
+            profile: "{{ aws_profile }}"
+            key_name: "{{ aws_ssh_key_name }}"
+            group: "{{ item[0].groups }}"
+            instance_type: "{{ aws_instance_type }}"
+            image: "{{ aws_image }}"
+            wait: true
+            region: "{{ aws_region }}"
+            vpc_subnet_id: "{{item[1]['id']}}"
+            assign_public_ip: True
+            instance_tags: "{{ item[0].tags }}"
+            exact_count: "{{ item[0].exact_count }}"
+            count_tag: "{{ item[0].tags }}"
+            zone: "{{ item[0].zone }}"
+        when: item[0]['tags']['subnet_tag'] == item[1]['resource_tags']['uid']
+        with_nested:
+            - "{{server_clusters}}"
+            - "{{ vpc_settings['subnets'] }}"
